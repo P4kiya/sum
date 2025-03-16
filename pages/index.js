@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { getData, calculateTotal } from '../lib/data';
+import { useSession, signOut } from 'next-auth/react';
+import { useRouter } from 'next/router';
 
-export async function getServerSideProps() {
+export async function getServerSideProps(context) {
   const data = await getData();
   const initialTotal = calculateTotal(data);
   return {
@@ -13,10 +15,22 @@ export async function getServerSideProps() {
 }
 
 export default function Home({ initialTotal, initialEntries }) {
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [total, setTotal] = useState(initialTotal);
   const [entries, setEntries] = useState(initialEntries);
   const [number, setNumber] = useState('');
   const [comment, setComment] = useState('');
+
+  // Redirect to login if not authenticated
+  if (status === 'loading') {
+    return <div>Loading...</div>;
+  }
+
+  if (!session) {
+    router.push('/login');
+    return null;
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -47,6 +61,16 @@ export default function Home({ initialTotal, initialEntries }) {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-xl font-semibold">Welcome, {session.user.username}</h2>
+          <button
+            onClick={() => signOut({ callbackUrl: '/login' })}
+            className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+          >
+            Sign Out
+          </button>
+        </div>
+
         <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
           <h1 className="text-4xl font-bold text-center text-gray-900 mb-8">
             Credit: <span className="text-blue-600">{total}</span>
