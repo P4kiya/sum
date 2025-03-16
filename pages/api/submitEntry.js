@@ -1,19 +1,6 @@
-import fs from 'fs';
-import path from 'path';
+import clientPromise from '../../lib/mongodb';
 
-const DATA_FILE_PATH = path.join(process.cwd(), 'data', 'entries.json');
-
-// Ensure the data directory exists
-if (!fs.existsSync(path.join(process.cwd(), 'data'))) {
-  fs.mkdirSync(path.join(process.cwd(), 'data'));
-}
-
-// Initialize the file with empty entries array if it doesn't exist or is empty
-if (!fs.existsSync(DATA_FILE_PATH) || fs.readFileSync(DATA_FILE_PATH, 'utf8').trim() === '') {
-  fs.writeFileSync(DATA_FILE_PATH, JSON.stringify({ entries: [] }, null, 2));
-}
-
-export default function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
@@ -21,14 +8,8 @@ export default function handler(req, res) {
   try {
     const { number, comment } = req.body;
     
-    // Read existing data
-    let data = { entries: [] };
-    try {
-      data = JSON.parse(fs.readFileSync(DATA_FILE_PATH, 'utf8'));
-    } catch (error) {
-      // If there's an error parsing, initialize with empty entries array
-      fs.writeFileSync(DATA_FILE_PATH, JSON.stringify({ entries: [] }, null, 2));
-    }
+    const client = await clientPromise;
+    const db = client.db('sum');
     
     // Create new entry with current date
     const newEntry = {
@@ -38,14 +19,16 @@ export default function handler(req, res) {
       id: Date.now() // unique identifier
     };
     
-    // Add new entry
-    data.entries.push(newEntry);
+    // Add new entry to MongoDB
+    await db.collection('entries').insertOne(newEntry);
     
-    // Calculate new total
-    const total = 50000 - data.entries.reduce((sum, entry) => sum + entry.number, 0);
-    
-    // Save updated data
-    fs.writeFileSync(DATA_FILE_PATH, JSON.stringify(data, null, 2));
+    // Get all entries to calculate total
+    const entries = await db.collection('entries').find({}).toArray();
+    const serializedEntries = entries.map(entry => ({
+      ...entry,
+      _id: entry._id.toString(),
+    }));
+    const total = 50000 - serializedEntries.reduce((sum, entry) => sum + entry.number, 0);
     
     res.status(200).json({ total, message: 'Entry saved successfully' });
   } catch (error) {

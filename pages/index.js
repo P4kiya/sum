@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { getData, calculateTotal } from '../lib/data';
 
 export async function getServerSideProps() {
-  const data = getData();
+  const data = await getData();
   const initialTotal = calculateTotal(data);
   return {
     props: { 
