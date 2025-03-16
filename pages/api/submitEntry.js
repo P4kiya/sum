@@ -8,9 +8,9 @@ if (!fs.existsSync(path.join(process.cwd(), 'data'))) {
   fs.mkdirSync(path.join(process.cwd(), 'data'));
 }
 
-// Initialize the file with empty array if it doesn't exist or is empty
+// Initialize the file with empty entries array if it doesn't exist or is empty
 if (!fs.existsSync(DATA_FILE_PATH) || fs.readFileSync(DATA_FILE_PATH, 'utf8').trim() === '') {
-  fs.writeFileSync(DATA_FILE_PATH, JSON.stringify([], null, 2));
+  fs.writeFileSync(DATA_FILE_PATH, JSON.stringify({ entries: [] }, null, 2));
 }
 
 export default function handler(req, res) {
@@ -21,13 +21,13 @@ export default function handler(req, res) {
   try {
     const { number, comment } = req.body;
     
-    // Read existing entries
-    let entries = [];
+    // Read existing data
+    let data = { entries: [] };
     try {
-      entries = JSON.parse(fs.readFileSync(DATA_FILE_PATH, 'utf8'));
+      data = JSON.parse(fs.readFileSync(DATA_FILE_PATH, 'utf8'));
     } catch (error) {
-      // If there's an error parsing, initialize with empty array
-      fs.writeFileSync(DATA_FILE_PATH, JSON.stringify([], null, 2));
+      // If there's an error parsing, initialize with empty entries array
+      fs.writeFileSync(DATA_FILE_PATH, JSON.stringify({ entries: [] }, null, 2));
     }
     
     // Create new entry with current date
@@ -39,13 +39,13 @@ export default function handler(req, res) {
     };
     
     // Add new entry
-    entries.push(newEntry);
+    data.entries.push(newEntry);
     
     // Calculate new total
-    const total = 50000 - entries.reduce((sum, entry) => sum + entry.number, 0);
+    const total = 50000 - data.entries.reduce((sum, entry) => sum + entry.number, 0);
     
-    // Save updated entries
-    fs.writeFileSync(DATA_FILE_PATH, JSON.stringify(entries, null, 2));
+    // Save updated data
+    fs.writeFileSync(DATA_FILE_PATH, JSON.stringify(data, null, 2));
     
     res.status(200).json({ total, message: 'Entry saved successfully' });
   } catch (error) {
