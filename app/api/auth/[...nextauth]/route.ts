@@ -1,26 +1,31 @@
 import NextAuth from "next-auth"
-import GithubProvider from "next-auth/providers/github"
+import CredentialsProvider from "next-auth/providers/credentials"
 import { AuthOptions } from "next-auth"
 
 const authOptions: AuthOptions = {
   providers: [
-    GithubProvider({
-      clientId: process.env.GITHUB_ID as string,
-      clientSecret: process.env.GITHUB_SECRET as string,
-    }),
+    CredentialsProvider({
+      name: "Credentials",
+      credentials: {
+        username: { label: "Username", type: "text" },
+        password: { label: "Password", type: "password" }
+      },
+      async authorize(credentials) {
+        // Check for your specific username and password
+        if (credentials?.username === "pakiya" && credentials?.password === "asas") {
+          return {
+            id: "1",
+            name: "Pakiya",
+            email: "pakiya@example.com",
+          }
+        }
+        return null
+      }
+    })
   ],
   secret: process.env.NEXTAUTH_SECRET,
   pages: {
-    signIn: '/auth/signin', // This should match your page location
-  },
-  callbacks: {
-    async redirect({ url, baseUrl }) {
-      // Allows relative callback URLs
-      if (url.startsWith("/")) return `${baseUrl}${url}`
-      // Allows callback URLs on the same origin
-      else if (new URL(url).origin === baseUrl) return url
-      return baseUrl
-    }
+    signIn: '/login', // Point this to your login page
   }
 }
 
