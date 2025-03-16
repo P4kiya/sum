@@ -12,7 +12,7 @@ const authOptions: AuthOptions = {
       },
       async authorize(credentials) {
         // Check for your specific username and password
-        if (credentials?.username === "pakiya" && credentials?.password === "asas") {
+        if (credentials?.username === "Pakiya" && credentials?.password === "asas") {
           return {
             id: "1",
             name: "Pakiya",
