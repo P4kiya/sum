@@ -1,4 +1,4 @@
-import { signIn } from "next-auth/react"
+import SignInButton from '@/app/components/SignInButton'
 
 export default function SignIn() {
   return (
@@ -10,12 +10,7 @@ export default function SignIn() {
           </h2>
         </div>
         <div className="mt-8 space-y-4">
-          <button
-            onClick={() => signIn("github", { callbackUrl: "/" })}
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-black hover:bg-gray-800"
-          >
-            Sign in with GitHub
-          </button>
+          <SignInButton />
         </div>
       </div>
     </div>
