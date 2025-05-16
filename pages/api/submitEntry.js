@@ -6,17 +6,19 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { number, comment } = req.body;
+    const { number, comment, operation } = req.body;
+    const amount = Number(number);
     
     const client = await clientPromise;
     const db = client.db('sum');
     
     // Create new entry with current date
     const newEntry = {
-      number: Number(number),
+      number: Math.abs(amount), // Store positive number for display purposes
       comment,
       date: new Date().toISOString(),
-      id: Date.now() // unique identifier
+      id: Date.now(), // unique identifier
+      operation // Store the operation type
     };
     
     // Add new entry to MongoDB
@@ -28,7 +30,17 @@ export default async function handler(req, res) {
       ...entry,
       _id: entry._id.toString(),
     }));
-    const total = 50000 - serializedEntries.reduce((sum, entry) => sum + entry.number, 0);
+    
+    // Calculate total - add or subtract based on operation field
+    const total = serializedEntries.reduce((sum, entry) => {
+      const entryAmount = entry.number;
+      // If operation is 'add', add to the total, otherwise subtract
+      if (entry.operation === 'add') {
+        return sum + entryAmount;
+      } else {
+        return sum - entryAmount;
+      }
+    }, 50000);
     
     res.status(200).json({ total, message: 'Entry saved successfully' });
   } catch (error) {

@@ -32,15 +32,18 @@ export default function Home({ initialTotal, initialEntries }) {
     return null;
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmitOperation = async (operation) => {
     try {
       const res = await fetch('/api/submitEntry', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ number, comment }),
+        body: JSON.stringify({ 
+          number, 
+          comment,
+          operation 
+        }),
       });
       if (!res.ok) {
         throw new Error('Failed to submit entry');
@@ -76,7 +79,7 @@ export default function Home({ initialTotal, initialEntries }) {
             Credit: <span className="text-blue-600">{total}</span>
           </h1>
           
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
             <div>
               <label htmlFor="number" className="block text-sm font-medium text-gray-700">
                 Amount
@@ -111,12 +114,23 @@ export default function Home({ initialTotal, initialEntries }) {
               </div>
             </div>
 
-            <button
-              type="submit"
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
-            >
-              Submit
-            </button>
+            {/* Replace the existing submit button with these two buttons */}
+            <div className="flex space-x-4">
+              <button
+                type="button"
+                onClick={() => handleSubmitOperation('add')}
+                className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200"
+              >
+                <span className="mr-2">+</span> Add
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSubmitOperation('subtract')}
+                className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200"
+              >
+                <span className="mr-2">-</span> Subtract
+              </button>
+            </div>
           </form>
         </div>
 
@@ -128,7 +142,13 @@ export default function Home({ initialTotal, initialEntries }) {
               <div key={entry.id} className="border-b border-gray-200 pb-4">
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="text-lg font-semibold text-gray-900">-{entry.number}</p>
+                    <p className="text-lg font-semibold text-gray-900">
+                      {entry.operation === 'add' ? (
+                        <span className="text-green-600">+{entry.number}</span>
+                      ) : (
+                        <span className="text-red-600">-{entry.number}</span>
+                      )}
+                    </p>
                     <p className="text-gray-600">{entry.comment}</p>
                   </div>
                   <p className="text-sm text-gray-500">
