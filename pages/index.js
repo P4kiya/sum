@@ -33,6 +33,13 @@ export default function Home({ initialTotal, initialEntries }) {
   }
 
   const handleSubmitOperation = async (operation) => {
+    // Validate inputs before submission
+    if (!number || number <= 0 || !comment.trim()) {
+      // Show an error message or alert
+      alert("Please enter a valid amount and comment");
+      return;
+    }
+    
     try {
       const res = await fetch('/api/submitEntry', {
         method: 'POST',
