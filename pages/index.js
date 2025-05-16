@@ -76,13 +76,13 @@ export default function Home({ initialTotal, initialEntries }) {
 
         <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
           <h1 className="text-4xl font-bold text-center text-gray-900 mb-8">
-            Credit: <span className="text-blue-600">{total}</span>
+            Solde : <span className="text-blue-600">{total}</span>
           </h1>
           
           <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
             <div>
               <label htmlFor="number" className="block text-sm font-medium text-gray-700">
-                Amount
+                Montant
               </label>
               <div className="mt-1">
                 <input
@@ -100,7 +100,7 @@ export default function Home({ initialTotal, initialEntries }) {
 
             <div>
               <label htmlFor="comment" className="block text-sm font-medium text-gray-700">
-                Comment
+                Motif
               </label>
               <div className="mt-1">
                 <input
@@ -121,14 +121,14 @@ export default function Home({ initialTotal, initialEntries }) {
                 onClick={() => handleSubmitOperation('add')}
                 className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200"
               >
-                <span className="mr-2">+</span> Add
+                <span className="mr-2">+</span> 
               </button>
               <button
                 type="button"
                 onClick={() => handleSubmitOperation('subtract')}
                 className="flex-1 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200"
               >
-                <span className="mr-2">-</span> Subtract
+                <span className="mr-2">-</span> 
               </button>
             </div>
           </form>
