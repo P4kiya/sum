@@ -220,7 +220,7 @@ export default function Home({ initialTotal, initialEntries }) {
 
           {/* Entries List */}
           <div className="bg-white rounded-xl shadow-lg p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">History</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Historique</h2>
             
             <div className="space-y-8">
               {sortedDates.slice(0, visibleDates).map(date => {
@@ -229,14 +229,16 @@ export default function Home({ initialTotal, initialEntries }) {
                   <div key={date} className="mb-6">
                     <h3 className="text-lg font-semibold text-gray-800 mb-3 pb-2 border-b flex justify-between items-center">
                       <div>
-                        {date} <span className="text-sm text-gray-500 font-normal ml-2">({entriesByDate[date].length} entries)</span>
+                        {date} <span className="text-sm text-gray-500 font-normal ml-2"> ( {entriesByDate[date].length} ) </span>
                       </div>
                       <div className={`font-semibold ${dayTotal >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                         {dayTotal >= 0 ? '+' : ''}{dayTotal}
                       </div>
                     </h3>
                     <div className="space-y-4 pl-2">
-                      {entriesByDate[date].slice().reverse().map((entry) => (
+                      {entriesByDate[date]
+                        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                        .map((entry) => (
                         <div key={entry.id} className="border-b border-gray-100 pb-3">
                           <div className="flex justify-between items-start">
                             <div>

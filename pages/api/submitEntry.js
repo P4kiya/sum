@@ -1,4 +1,4 @@
-import clientPromise from '../../lib/mongodb';
+import connectToDatabase from '../../lib/mongodb';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -7,40 +7,21 @@ export default async function handler(req, res) {
 
   try {
     const { number, comment, operation } = req.body;
-    const amount = Number(number);
+    const { db } = await connectToDatabase();
     
-    const client = await clientPromise;
-    const db = client.db('sum');
-    
-    // Create new entry with current date
     const newEntry = {
-      number: Math.abs(amount), // Store positive number for display purposes
+      number: Math.abs(Number(number)),
       comment,
       date: new Date().toISOString(),
-      id: Date.now(), // unique identifier
-      operation // Store the operation type
+      operation
     };
     
-    // Add new entry to MongoDB
     await db.collection('entries').insertOne(newEntry);
     
-    // Get all entries to calculate total
     const entries = await db.collection('entries').find({}).toArray();
-    const serializedEntries = entries.map(entry => ({
-      ...entry,
-      _id: entry._id.toString(),
-    }));
-    
-    // Calculate total - add or subtract based on operation field
-    const total = serializedEntries.reduce((sum, entry) => {
-      const entryAmount = entry.number;
-      // If operation is 'add', add to the total, otherwise subtract
-      if (entry.operation === 'add') {
-        return sum + entryAmount;
-      } else {
-        return sum - entryAmount;
-      }
-    }, 50000);
+    const total = entries.reduce((sum, entry) => {
+      return entry.operation === 'add' ? sum + entry.number : sum - entry.number;
+    }, 0);
     
     res.status(200).json({ total, message: 'Entry saved successfully' });
   } catch (error) {
