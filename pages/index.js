@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { getData, calculateTotal } from '../lib/data';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/router';
+import { AUTOCOMPLETE_KEYWORDS } from '../lib/constants';
 
 export async function getServerSideProps(context) {
   const data = await getData();
@@ -31,9 +32,11 @@ export default function Home({ initialTotal, initialEntries }) {
   const [number, setNumber] = useState('');
   const [comment, setComment] = useState('');
   const [selectedDate, setSelectedDate] = useState(null);
-  const [visibleDates, setVisibleDates] = useState(20);
+  const [visibleDates, setVisibleDates] = useState(5);
   const [loading, setLoading] = useState(false);
   const loadMoreRef = useRef(null);
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   // 2. useMemo hooks
   // Group entries by date
@@ -73,15 +76,19 @@ export default function Home({ initialTotal, initialEntries }) {
     const observer = new IntersectionObserver(
       (entries) => {
         const first = entries[0];
-        if (first.isIntersecting) {
+        if (first.isIntersecting && !loading && sortedDates.length > visibleDates) {
           setLoading(true);
+          // Simulate a small delay for better UX
           setTimeout(() => {
-            setVisibleDates((prev) => prev + 5);
+            setVisibleDates((prev) => Math.min(prev + 5, sortedDates.length));
             setLoading(false);
           }, 500);
         }
       },
-      { threshold: 1.0 }
+      { 
+        threshold: 0.1,
+        rootMargin: '100px'
+      }
     );
 
     if (loadMoreRef.current) {
@@ -93,7 +100,7 @@ export default function Home({ initialTotal, initialEntries }) {
         observer.unobserve(loadMoreRef.current);
       }
     };
-  }, []);
+  }, [loading, sortedDates.length, visibleDates]);
 
   // 4. Early returns using loading state from hooks
   if (status === 'loading') {
@@ -142,6 +149,27 @@ export default function Home({ initialTotal, initialEntries }) {
     }
   };
 
+  const handleCommentChange = (e) => {
+    const value = e.target.value;
+    setComment(value);
+    
+    if (value.length >= 1) {
+      const filtered = AUTOCOMPLETE_KEYWORDS.filter(keyword =>
+        keyword.toLowerCase().startsWith(value.toLowerCase())
+      );
+      setSuggestions(filtered);
+      setShowSuggestions(true);
+    } else {
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleSuggestionClick = (suggestion) => {
+    setComment(suggestion);
+    setShowSuggestions(false);
+  };
+
   // 6. Component render
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
@@ -187,15 +215,35 @@ export default function Home({ initialTotal, initialEntries }) {
                 <label htmlFor="comment" className="block text-sm font-medium text-gray-700">
                   Motif
                 </label>
-                <div className="mt-1">
+                <div className="mt-1 relative">
                   <input
                     type="text"
                     id="comment"
                     value={comment}
-                    onChange={(e) => setComment(e.target.value)}
+                    onChange={handleCommentChange}
+                    onFocus={() => comment.length >= 1 && setShowSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowSuggestions(false), 300)}
                     className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     required
                   />
+                  {showSuggestions && suggestions.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white rounded-md shadow-lg">
+                      <ul className="max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
+                        {suggestions.map((suggestion, index) => (
+                          <li
+                            key={index}
+                            className="cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-gray-100"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              handleSuggestionClick(suggestion);
+                            }}
+                          >
+                            <span className="block truncate">{suggestion}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -238,6 +286,7 @@ export default function Home({ initialTotal, initialEntries }) {
                     <div className="space-y-4 pl-2">
                       {entriesByDate[date]
                         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                        .slice(0, 20) // Limit entries per date to 20
                         .map((entry) => (
                         <div key={entry.id} className="border-b border-gray-100 pb-3">
                           <div className="flex justify-between items-start">
@@ -271,9 +320,9 @@ export default function Home({ initialTotal, initialEntries }) {
                 <div ref={loadMoreRef} className="text-center py-4">
                   {loading ? (
                     <div className="flex justify-center items-center space-x-2">
-                      <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                      <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                      <div className="w-3 h-3 bg-blue-600 rounded-full animate-bounce"></div>
+                      <div className="w-3 h-3 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                      <div className="w-3 h-3 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
                     </div>
                   ) : (
                     <p className="text-gray-500">Scroll for more</p>
